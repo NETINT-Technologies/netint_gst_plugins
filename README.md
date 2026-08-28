@@ -1,8 +1,6 @@
-# Coming Soon
+# NETINT Quadra VPU GStreamer Plugins
 
-## NETINT Quadra VPU
+## Installation
 
-### Gstreamer Plugin
-
-Support for Gstreamer using plugins.
+Run `./build_ni_gst_plugins.sh -h` for instructions.
 
