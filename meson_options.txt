@@ -1,0 +1,5 @@
+option('nilogan', type : 'feature', value : 'auto', description : 'NI XCoder_logan video encoder/decoder plugin')
+option('niquadra', type : 'feature', value : 'auto', description : 'NI XCoder video encoder/decoder/filter plugin')
+option('examples', type : 'feature', value : 'auto', yield : true, description : 'Build the examples')
+option('ni-gst-framework-patch', type : 'boolean', value : false, description : 'Enable support for NETINT-patched GStreamer framework APIs')
+option('package-origin', type : 'string', value : 'Unknown package origin', yield : true, description : 'package origin URL to use in plugins')

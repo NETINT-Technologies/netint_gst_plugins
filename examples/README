@@ -1,0 +1,120 @@
+Example programs
+================
+This repository contains three demonstration applications showcasing different capabilities of NetInt Quadra                                                                                               GStreamer plugins for video processing and transcoding.
+
+Compile
+================
+When build Quadra's gstreamer plugin, the example will be built automatically.
+If you want to build the examples manually, please use the following command to build:
+gcc -o demo_ni_ppu demo_ni_ppu.c `pkg-config --cflags --libs gstreamer-1.0`
+gcc -o demo_ni_scale demo_ni_scale.c `pkg-config --cflags --libs gstreamer-1.0`
+gcc -o demo_ni_stack demo_ni_stack.c `pkg-config --cflags --libs gstreamer-1.0`
+
+###
+Stack Demo (demo_ni_stack.c)
+Demonstrates dynamic video stacking capabilities with runtime input and layout management.
+
+Usage and Parameters:
+./demo_ni_stack [OPTIONS]
+
+Parameters:
+  -m, --mode MODE              Operation mode (1=add input, 2=remove input, 3=change layout)
+  -f, --frame FRAME            Trigger frame number
+  -i, --input1 FILE            First input file (H264/H265)
+  -j, --input2 FILE            Second input file (H264/H265)
+  -k, --input3 FILE            Third input file (H264/H265, required for mode 0&1)
+  -o, --output FILE            Output file (H264/H265)
+  -l, --initial-layout LAYOUT  Initial layout string
+  -L, --new-layout LAYOUT      New layout string
+  -s, --initial-size SIZE      Initial size string
+  -S, --new-size SIZE          New size string
+  -n, --initial-inputs NUM     Initial input count
+  -N, --new-inputs NUM         New input count
+
+Usage example:
+1. Add input: Change from 2 to 3 inputs at frame 100
+	sudo ./demo_ni_stack -m 1 -f 100 -i Dinner_1920x1080p30_300.h264 -j Dinner_1920x1080p30_300.h264 -k Dinner_1920x1080p30_300.h264 -o output.h264 -n 2 -N 3 -l "0_0|0_h0" -L "0_0|0_h0|0_h0+h1" -s "320_240|320_240" -S "320_240|320_240|320_240"
+
+2. Remove input: Change from 3 to 2 inputs at frame 100
+    sudo ./demo_ni_stack -m 2 -f 100 -i Dinner_1920x1080p30_300.h264 -j Dinner_1920x1080p30_300.h264 -k Dinner_1920x1080p30_300.h264 -o output.h264 -n 3 -N 2 -l "0_0|0_h0|0_h0+h1" -L "0_0|0_h0" -s "320_240|320_240|320_240" -S "320_240|320_240"
+
+3. Change layout: Modify layout without changing input count
+   sudo ./demo_ni_stack -m 3 -f 100 -i Dinner_1920x1080p30_300.h264 -j Dinner_1920x1080p30_300.h264 -k Dinner_1920x1080p30_300.h264 -o output.h264 -n 2 -l "0_0|0_h0" -L "0_h0|0_0" -s "320_240|320_240"
+
+###
+Scale Demo (demo_ni_scale.c)
+Demonstrates dynamic video scaling with runtime resolution changes for .
+
+Usage and Parameters:
+./demo_ni_scale [OPTIONS]
+
+Parameters:
+  -i, --input FILE          Input file (H264/H265 format)
+  -o, --output FILE         Output file (H264/H265 format)
+  -r, --initial-res WxH     Initial resolution (e.g., 1280x720)
+  -c, --change-res WxH      Changed resolution (e.g., 560x480)
+  -f, --frame-num NUM       Frame number to change resolution
+
+Usage example:
+sudo ./demo_ni_scale -i input.h264 -o output.h264 -r 1920x1080 -c 1280x720 -f 150
+
+
+###
+PPU Demo (demo_ni_ppu.c)
+Demonstrates Quadra ppu decoder with multi-output transcoding and dynamic parameter changes.
+
+Usage and Parameters:
+./demo_ni_ppu [OPTIONS]
+
+Parameters:
+  -i, --input FILE              Input file (H264/H265/264/265)
+  -o, --output1 FILE            Output file 1 (H264/H265/264/265)
+  -p, --output2 FILE            Output file 2 (H264/H265/264/265)
+  -q, --output3 FILE            Output file 3 (H264/H265/264/265)
+  -x, --initial-params PARAMS   Initial xcoder-params
+  -y, --changed-params PARAMS   Changed xcoder-params
+  -f, --change-frame NUMBER     Frame number to change params
+
+Usage example:
+sudo ./demo_ni_ppu -i Dinner_1920x1080p30_300.h264 -o out1.h265 -p out2.h265 -q out3.h264 -x "out=hw:minPacketsDelay=1:disableAdaptiveBuffers=1:enableOut1=1:scale1=1280x720:enableOut2=1:scale2=640x360" -y "out=hw:minPacketsDelay=1:disableAdaptiveBuffers=1:enableOut1=1:scale1=1280x720:enableOut2=1:scale2=720x480" -f 100
+
+
+###
+decodebin Demo (demo_decodebin.c)
+Using Quadra's codec plugins to demonstrate decodebin usage
+
+Usage and Parameters:
+./demo_decodebin [OPTIONS]
+
+Options:
+  -i, --input FILE         Input file path (mp4)
+  -o, --output FILE        Output file path (mp4)
+  -e, --encoder ENCODER    Video encoder to use (default: niquadrah265enc)
+  -d, --decoders DECODERS  Comma-separated list of allowed decoders
+                           (default: niquadrah264dec,niquadrah265dec)
+  -h, --help               Show this help message
+
+Usage example:
+sudo ./demo_decodebin -d niquadrah264dec,niquadrah265dec -e niquadrah265enc -i wzry_640x480p30_450_h264.mp4 -o output.mp4
+
+
+###
+seek Demo (demo_seek.c)
+Using Quadra's codec plugins to demonstrate seek usage
+
+Usage and Parameters:
+./demo_seek [OPTIONS]
+
+Options:
+  -i, --input FILE         Input file path (required)
+  -o, --output FILE        Output file path (required)
+  -e, --encoder ENCODER    Video encoder to use (default: niquadrah265enc)
+  -d, --decoders DECODERS  Comma-separated list of allowed decoders
+                           (default: niquadrah264dec,niquadrah265dec)
+  -s, --start SECONDS      Clip start time in seconds (default: 600)
+  -l, --length SECONDS     Clip duration in seconds (default: 20)
+  -h, --help               Show this help message
+
+Usage example:
+sudo ./demo_seek -i bunny_h264.mp4 -d niquadrah264dec -e niquadrah265enc -s 600 -l 20 -o bunny_h265.mp4
+
