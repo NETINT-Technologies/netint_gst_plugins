@@ -1,24 +1,20 @@
 project('gst-niquadra', 'c',
-  version : '1.22.2', 
+  version : '5.8.2',
   meson_version : '>= 0.62',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
 
-# Basic settings
-gst_version = meson.project_version()
-# Sentinel: all develop builds share the '---' prefix, so this always passes.
-# Replace with a full revision string when cutting a release.
-ni_gst_revision = '582-----'
+ni_gst_revision = meson.project_version().replace('.', '')
 
 # GStreamer dependencies - require version 1.22.2 and above
 gst_req = '>= 1.22.2'
-gst_dep = dependency('gstreamer-1.0', version : gst_req, required: true)
-gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req, required: true)
-gstapp_dep = dependency('gstreamer-app-1.0', version : gst_req, required: true)
-gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req, required: true)
-gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req, required: true)
-gstallocators_dep = dependency('gstreamer-allocators-1.0', version : gst_req, required: true)
-gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version : gst_req, required: true)
+gst_dep = dependency('gstreamer-1.0', version : gst_req)
+gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req)
+gstapp_dep = dependency('gstreamer-app-1.0', version : gst_req)
+gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req)
+gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req)
+gstallocators_dep = dependency('gstreamer-allocators-1.0', version : gst_req)
+gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version : gst_req)
 
 # Math library dependency
 cc = meson.get_compiler('c')
@@ -48,7 +44,7 @@ endif
 
 # Configuration data
 cdata = configuration_data()
-cdata.set_quoted('VERSION', gst_version)
+cdata.set_quoted('VERSION', meson.project_version())
 cdata.set_quoted('PACKAGE', 'gst-niquadra')
 cdata.set_quoted('GST_PACKAGE_NAME', 'GStreamer NiQuadra Plugin')
 cdata.set_quoted('GST_PACKAGE_ORIGIN', get_option('package-origin'))

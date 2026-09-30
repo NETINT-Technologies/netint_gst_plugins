@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/NETINT-Technologies/netint_libxcoder
+revision = v5.8.0
+
+[provide]
+dependency_names = xcoder
