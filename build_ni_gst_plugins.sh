@@ -83,7 +83,6 @@ if [[ "$OS_TYPE" == "windows" ]]; then
     meson setup --wipe build \
         -Dwerror=false \
         -Dc_args="-Wno-incompatible-pointer-types -I/usr/local/include" \
-        --wrap-mode=nodownload \
         "${meson_prefix_option[@]}" \
         "${meson_framework_patch_option[@]}" &&
     ninja -C build

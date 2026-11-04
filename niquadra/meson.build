@@ -7,6 +7,11 @@ endif
 
 ni_plugins_args = ['-DHAVE_CONFIG_H']
 
+math_dep = cc.find_library('m', required: false)
+if not math_dep.found()
+  math_dep = dependency('', required: false)
+endif
+
 niquadra_sources =[
     'gstniquadra.c',
     'gstniquadracontext.c',
@@ -45,11 +50,57 @@ niquadra_sources =[
     'gstniquadrasplit.c',
     ]
 
-xcoder_dep = dependency('xcoder', required: get_option('niquadra'), version: '=' + meson.project_version())
+niquadra_dep = []
+
+niquadra_option = get_option('niquadra')
+if niquadra_option.disabled()
+  subdir_done()
+endif
+
+xcoder_dep = dependency(
+  'xcoder',
+  required : niquadra_option,
+  allow_fallback : true,
+)
 if not xcoder_dep.found()
   subdir_done()
 endif
 
+# Preserve all include paths and compiler flags, omitting unbuilt link targets.
+xcoder_check_dep = xcoder_dep.partial_dependency(
+  compile_args : true,
+  includes : true,
+)
+xcoder_check_args = []
+if xcoder_dep.type_name() == 'internal'
+  # This fallback variable is not read from a .pc file. Meson 0.62 compiler
+  # checks do not use internal include_directories, so add the exported path.
+  xcoder_check_args = ['-I' + xcoder_dep.get_variable(internal : 'includedir')]
+endif
+
+xcoder_revision = cc.get_define('NI_XCODER_REVISION',
+  prefix : '#include <ni_defs.h>',
+  args : xcoder_check_args,
+  dependencies : xcoder_check_dep).replace('"', '')
+if xcoder_revision.substring(2, 3) == ''
+  revision_mismatch_msg = 'NI_XCODER_REVISION could not be read from xcoder dependency'
+  if niquadra_option.enabled()
+    error('niquadra plugin enabled but ' + revision_mismatch_msg)
+  else
+    warning('niquadra plugin disabled: ' + revision_mismatch_msg)
+    subdir_done()
+  endif
+endif
+if xcoder_required_revision != xcoder_revision.substring(0, 3)
+  revision_mismatch_msg = 'required xcoder revision (@0@) does not match NI_XCODER_REVISION (@1@)'.format(
+    xcoder_required_revision, xcoder_revision)
+  if niquadra_option.enabled()
+    error('niquadra plugin enabled but ' + revision_mismatch_msg)
+  else
+    warning('niquadra plugin disabled: ' + revision_mismatch_msg)
+    subdir_done()
+  endif
+endif
 
 gstniquadratag = library('gstniquadra',
   niquadra_sources,
