@@ -1,14 +1,19 @@
 project('gst-niquadra', 'c',
-  version : '1.22.2', 
+  version : '5.8.2',
   meson_version : '>= 0.62',
-  default_options : [ 'warning_level=1',
-                      'buildtype=debugoptimized' ])
+  default_options : [
+    'prefix=/usr/local',
+    # Match libxcoder/build.sh when libxcoder is built as a fallback.
+    'libdir=lib',
+    'bindir=bin',
+    'includedir=include',
+    'warning_level=1',
+    'buildtype=debugoptimized',
+  ])
 
-# Basic settings
-gst_version = meson.project_version()
-# Sentinel: all develop builds share the '---' prefix, so this always passes.
-# Replace with a full revision string when cutting a release.
-ni_gst_revision = '582-----'
+# Only these three characters participate in the libxcoder compatibility check.
+# Keep this product compatibility requirement independent of project versions.
+xcoder_required_revision = '590'
 
 # GStreamer dependencies - require version 1.22.2 and above
 gst_req = '>= 1.22.2'
@@ -48,11 +53,11 @@ endif
 
 # Configuration data
 cdata = configuration_data()
-cdata.set_quoted('VERSION', gst_version)
+cdata.set_quoted('VERSION', meson.project_version())
 cdata.set_quoted('PACKAGE', 'gst-niquadra')
 cdata.set_quoted('GST_PACKAGE_NAME', 'GStreamer NiQuadra Plugin')
 cdata.set_quoted('GST_PACKAGE_ORIGIN', get_option('package-origin'))
-cdata.set_quoted('NI_GST_REVISION', ni_gst_revision)
+cdata.set_quoted('XCODER_REQUIRED_REVISION', xcoder_required_revision)
 cdata.set('GST_USE_UNSTABLE_API', true)
 cdata.set10('ENABLE_NI_GST_FRAMEWORK_PATCH', ni_gst_framework_patch)
 
@@ -62,10 +67,18 @@ configure_file(output : 'config.h', configuration : cdata)
 # Include directories and compile arguments
 configinc = include_directories('.')
 
-# Installation directory
+# Keep GStreamer's plugin directory layout under the selected install prefix.
 pkgconfig = import('pkgconfig')
-plugins_install_dir = join_paths(get_option('libdir'), 'gstreamer-1.0')
-plugins_pkgconfig_install_dir = join_paths(plugins_install_dir, 'pkgconfig')
+gst_prefix_override = ['prefix', get_option('prefix')]
+gst_libdir = gst_dep.get_variable(
+  pkgconfig : 'libdir',
+  pkgconfig_define : gst_prefix_override,
+)
+plugins_install_dir = gst_dep.get_variable(
+  pkgconfig : 'pluginsdir',
+  pkgconfig_define : gst_prefix_override,
+)
+plugins_pkgconfig_install_dir = join_paths(gst_libdir, 'pkgconfig')
 
 plugins = []
 

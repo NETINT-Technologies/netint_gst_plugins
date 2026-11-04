@@ -57,23 +57,43 @@ if niquadra_option.disabled()
   subdir_done()
 endif
 
-xcoder_dep = dependency('xcoder', required: get_option('niquadra'))
-if xcoder_dep.found()
-  xcoder_incdir = xcoder_dep.get_variable('includedir')
-  xcoder_inc = []
-elif get_option('niquadra').enabled()
-  error('niquadra plugin enabled but NI xcoder not found: consider setting PKG_CONFIG_PATH')
+xcoder_dep = dependency(
+  'xcoder',
+  required : niquadra_option,
+  allow_fallback : true,
+)
+if not xcoder_dep.found()
   subdir_done()
-else
-  subdir_done()
+endif
+
+# Preserve all include paths and compiler flags, omitting unbuilt link targets.
+xcoder_check_dep = xcoder_dep.partial_dependency(
+  compile_args : true,
+  includes : true,
+)
+xcoder_check_args = []
+if xcoder_dep.type_name() == 'internal'
+  # This fallback variable is not read from a .pc file. Meson 0.62 compiler
+  # checks do not use internal include_directories, so add the exported path.
+  xcoder_check_args = ['-I' + xcoder_dep.get_variable(internal : 'includedir')]
 endif
 
 xcoder_revision = cc.get_define('NI_XCODER_REVISION',
   prefix : '#include <ni_defs.h>',
-  dependencies : xcoder_dep).replace('"', '')
-if ni_gst_revision.substring(0, 3) != xcoder_revision.substring(0, 3)
-  revision_mismatch_msg = 'NI_GST_REVISION (@0@) does not match NI_XCODER_REVISION (@1@)'.format(
-    ni_gst_revision, xcoder_revision)
+  args : xcoder_check_args,
+  dependencies : xcoder_check_dep).replace('"', '')
+if xcoder_revision.substring(2, 3) == ''
+  revision_mismatch_msg = 'NI_XCODER_REVISION could not be read from xcoder dependency'
+  if niquadra_option.enabled()
+    error('niquadra plugin enabled but ' + revision_mismatch_msg)
+  else
+    warning('niquadra plugin disabled: ' + revision_mismatch_msg)
+    subdir_done()
+  endif
+endif
+if xcoder_required_revision != xcoder_revision.substring(0, 3)
+  revision_mismatch_msg = 'required xcoder revision (@0@) does not match NI_XCODER_REVISION (@1@)'.format(
+    xcoder_required_revision, xcoder_revision)
   if niquadra_option.enabled()
     error('niquadra plugin enabled but ' + revision_mismatch_msg)
   else
@@ -82,15 +102,13 @@ if ni_gst_revision.substring(0, 3) != xcoder_revision.substring(0, 3)
   endif
 endif
 
-if xcoder_dep.found()
-  gstniquadratag = library('gstniquadra',
-    niquadra_sources,
-    c_args : ni_plugins_args,
-    include_directories : [configinc, xcoder_inc],
-    dependencies : [gstbase_dep, gstapp_dep, gstvideo_dep, gstpbutils_dep, gstallocators_dep, gstcodecparsers_dep, math_dep, xcoder_dep] + platform_deps,
-    install : true,
-    install_dir : plugins_install_dir,
-  )
-  pkgconfig.generate(gstniquadratag, install_dir : plugins_pkgconfig_install_dir)
-  plugins += [gstniquadratag]
-endif
+gstniquadratag = library('gstniquadra',
+  niquadra_sources,
+  c_args : ni_plugins_args,
+  include_directories : [configinc],
+  dependencies : [gstbase_dep, gstapp_dep, gstvideo_dep, gstpbutils_dep, gstallocators_dep, gstcodecparsers_dep, math_dep, xcoder_dep] + platform_deps,
+  install : true,
+  install_dir : plugins_install_dir,
+)
+pkgconfig.generate(gstniquadratag, install_dir : plugins_pkgconfig_install_dir)
+plugins += [gstniquadratag]

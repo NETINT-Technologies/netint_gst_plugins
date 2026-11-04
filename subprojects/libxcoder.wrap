@@ -1,0 +1,8 @@
+[wrap-git]
+directory = libxcoder
+url = https://github.com/kaidilala-ngx/netint_libxcoder.git
+revision = meson
+depth = 1
+
+[provide]
+dependency_names = xcoder
